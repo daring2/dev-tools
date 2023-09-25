@@ -4,12 +4,12 @@ fn main() {
     let mut args = env::args().skip(1);
     let command: &str = &args.next().unwrap();
     match command {
-        "git-release" => perform_git_release(args),
+        "release" => perform__release(args),
         _ => ()
     };
 }
 
-fn perform_git_release(mut args: impl Iterator<Item = String>) {
+fn perform__release(mut args: impl Iterator<Item = String>) {
     let new_version = args.next().unwrap();
     println!("new version: {new_version}");
 }
