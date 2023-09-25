@@ -9,6 +9,7 @@ fn main() {
     };
 }
 
-fn perform_git_release(mut args: impl Iterator<Item = &str>) {
-    //TODO implement
+fn perform_git_release(mut args: impl Iterator<Item = String>) {
+    let new_version = args.next().unwrap();
+    println!("new version: {new_version}");
 }
