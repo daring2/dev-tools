@@ -1,4 +1,4 @@
-use std::{env, io};
+use std::env;
 use std::fs;
 use std::process::Command;
 
@@ -16,6 +16,7 @@ fn perform_release(mut args: impl Iterator<Item = String>) {
     let next_version = args.next().unwrap();
     println!("release: current_version={}, next_version={}", current_version, next_version);
     exec_cmd("gradlew.bat clean build publish");
+    exec_cmd(&format!("git tag -a v{0} -m \"v{0}\"", current_version));
 }
 
 fn read_current_version() -> Option<String> {
