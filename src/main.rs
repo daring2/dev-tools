@@ -17,8 +17,8 @@ fn perform_release(mut args: impl Iterator<Item = String>) {
     println!("release: current_version={}, next_version={}", current_version, next_version);
     exec_cmd("gradlew.bat clean build publish");
     exec_cmd(&format!("git tag -a v{0} -m \"v{0}\"", current_version));
-    // exec_cmd("git push");
     fs::write("gradle.properties", format!("version={next_version}")).unwrap();
+    // exec_cmd("git commit push");
 }
 
 fn read_current_version() -> Option<String> {
