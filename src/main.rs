@@ -12,16 +12,18 @@ fn main() {
 }
 
 fn perform_release(mut args: impl Iterator<Item = String>) {
-    let current_version = read_current_version();
+    let current_version = read_current_version().unwrap();
     let next_version = args.next().unwrap();
     println!("release: current_version={}, next_version={}", current_version, next_version);
     exec_cmd("gradlew.bat clean build publish");
 }
 
-fn read_current_version() -> String {
-    let content = fs::read_to_string("gradle.properties").unwrap();
-    let version = content.strip_prefix("version=").unwrap().trim();
-    return String::from(version)
+fn read_current_version() -> Option<String> {
+    fs::read_to_string("gradle.properties").unwrap()
+        .lines()
+        .filter_map(|it|it.strip_prefix("version="))
+        .map(|it|String::from(it.trim()))
+        .next()
 }
 
 fn exec_cmd(command: &str) {
