@@ -27,6 +27,7 @@ fn read_current_version() -> Option<String> {
 }
 
 fn exec_cmd(command: &str) {
+    println!("execute {command}");
     let status = Command::new("cmd")
         .args(["/C", command])
         .current_dir(env::current_dir().unwrap())
