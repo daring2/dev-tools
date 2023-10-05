@@ -4,25 +4,32 @@ use std::process::Command;
 
 fn main() {
     let mut args = env::args().skip(1);
-    let command: &str = &args.next().unwrap();
+    let command: &str = &args.next()
+        .expect("Please specify command");
     match command {
         "release" => perform_release(args),
-        _ => ()
+        _ => panic!("Invalid command '{command}'")
     };
 }
 
 fn perform_release(mut args: impl Iterator<Item = String>) {
-    let current_version = read_current_version().unwrap();
-    let next_version = args.next().unwrap();
+    let current_version = load_current_version().
+        expect("Cannot load current version");
+    let next_version = args.next()
+        .expect("Please specify next version");
     println!("release: current_version={}, next_version={}", current_version, next_version);
-    exec_cmd("gradlew.bat clean build publish");
+    //TODO add option for clean build
+    exec_cmd("gradlew.bat publish");
     exec_cmd(&format!("git tag -a v{0} -m \"v{0}\"", current_version));
-    fs::write("gradle.properties", format!("version={next_version}")).unwrap();
+    fs::write("gradle.properties", format!("version={next_version}"))
+        .expect("Cannot update version");
     // exec_cmd("git commit push");
 }
 
-fn read_current_version() -> Option<String> {
-    fs::read_to_string("gradle.properties").unwrap()
+fn load_current_version() -> Option<String> {
+    let file = "gradle.properties";
+    fs::read_to_string(file)
+        .expect("Cannot read file '{file}'")
         .lines()
         .filter_map(|it|it.strip_prefix("version="))
         .map(|it|String::from(it.trim()))
