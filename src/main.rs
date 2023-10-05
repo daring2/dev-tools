@@ -4,6 +4,7 @@ use std::process::Command;
 
 fn main() {
     let mut args = env::args().skip(1);
+    //TODO replace panic with Result
     let command: &str = &args.next()
         .expect("Please specify command");
     match command {
