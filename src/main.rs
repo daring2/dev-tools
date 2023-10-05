@@ -13,8 +13,8 @@ fn main() {
 }
 
 fn perform_release(mut args: impl Iterator<Item = String>) {
-    let current_version = load_current_version().
-        expect("Cannot load current version");
+    let current_version = load_current_version()
+        .expect("Cannot load current version");
     let next_version = args.next()
         .expect("Please specify next version");
     println!("release: current_version={}, next_version={}", current_version, next_version);
