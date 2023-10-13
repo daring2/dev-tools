@@ -20,7 +20,8 @@ fn perform_release(mut args: impl Iterator<Item = String>) {
         .expect("Please specify next version");
     println!("release: current_version={}, next_version={}", current_version, next_version);
     //TODO add option for clean build
-    exec_cmd("gradlew.bat publish");
+    let gradle_cmd = "gradlew.bat --no-daemon";
+    exec_cmd(&format!("{gradle_cmd} publish"));
     exec_cmd(&format!("git tag -a v{0} -m \"v{0}\"", current_version));
     fs::write("gradle.properties", format!("version={next_version}"))
         .expect("Cannot update version");
