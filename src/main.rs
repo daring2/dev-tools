@@ -18,7 +18,7 @@ fn perform_release(mut args: impl Iterator<Item = String>) {
         .expect("Cannot load current version");
     let next_version = args.next()
         .expect("Please specify next version");
-    println!("release: current_version={}, next_version={}", current_version, next_version);
+    println!("release: current_version={current_version}, next_version={next_version}");
     //TODO add option for clean build
     let gradle_cmd = "gradlew.bat --no-daemon";
     exec_cmd(&format!("{gradle_cmd} publish"));
