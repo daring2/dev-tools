@@ -27,10 +27,11 @@ fn perform_release(mut args: impl Iterator<Item = String>) -> CmdResult<i8> {
     //TODO add option for clean build
     let gradle_cmd = "gradlew.bat --no-daemon";
     exec_cmd(&format!("{gradle_cmd} publish"));
-    exec_cmd(&format!("git tag -a v{0} -m \"v{0}\"", current_version));
+    exec_cmd(&format!("git tag -a v{0} -m v{0}", current_version));
     fs::write("gradle.properties", format!("version={next_version}"))
         .expect("Cannot update version");
-    exec_cmd(&format!("git commit -m \"build version {current_version}\""));
+    //TODO use "build version {current_version} message
+    exec_cmd(&format!("git commit -m v{current_version}"));
     Ok(0)
 }
 
