@@ -25,7 +25,7 @@ fn perform_release(mut args: impl Iterator<Item = String>) {
     exec_cmd(&format!("git tag -a v{0} -m \"v{0}\"", current_version));
     fs::write("gradle.properties", format!("version={next_version}"))
         .expect("Cannot update version");
-    // exec_cmd("git commit push");
+    exec_cmd(&format!("git commit -m \"build version {current_version}\""));
 }
 
 fn load_current_version() -> Option<String> {
