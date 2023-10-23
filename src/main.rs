@@ -1,5 +1,6 @@
 use std::{env, process};
 use std::fs;
+use std::os::windows::process::CommandExt;
 use std::process::Command;
 
 fn main() {
@@ -31,7 +32,7 @@ fn perform_release(mut args: impl Iterator<Item = String>) -> CmdResult<i8> {
     fs::write("gradle.properties", format!("version={next_version}"))
         .expect("Cannot update version");
     //TODO use "build version {current_version} message
-    exec_cmd(&format!("git commit -m v{current_version}"));
+    exec_cmd(&format!("git commit -am \"build version {current_version}\""));
     Ok(0)
 }
 
@@ -49,7 +50,8 @@ fn load_current_version() -> CmdResult<String> {
 fn exec_cmd(command: &str) {
     println!("execute {command}");
     let status = Command::new("cmd")
-        .args(["/C", command])
+        .arg("/C")
+        .raw_arg(command)
         .current_dir(env::current_dir().unwrap())
         .status()
         .unwrap();
