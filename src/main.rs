@@ -52,12 +52,17 @@ fn exec_cmd(command: &str) -> CmdResult<()> {
         |e|format!("Cannot get current_dir: {e}")
     )?;
     println!("execute {command}");
-    let status = Command::new("cmd")
-        .arg("/C")
+    Command::new("cmd").arg("/C")
         .raw_arg(command)
         .current_dir(current_dir)
         .status()
-        .unwrap();
-    assert!(status.success());
+        .map_err(|e|e.to_string())
+        .and_then(|it| match it {
+            _ if it.success() => Ok(it),
+            _ => Err(it.to_string())
+        })
+        .map_err(|e|
+            format!("Cannot execute command '{command}': {e}")
+        )?;
     Ok(())
 }
