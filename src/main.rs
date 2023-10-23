@@ -27,12 +27,12 @@ fn perform_release(mut args: impl Iterator<Item = String>) -> CmdResult<()> {
     println!("release: current_version={current_version}, next_version={next_version}");
     //TODO add option for clean build
     let gradle_cmd = "gradlew.bat --no-daemon";
-    exec_cmd(&format!("{gradle_cmd} publish"));
-    exec_cmd(&format!("git tag -a v{0} -m v{0}", current_version));
+    exec_cmd(&format!("{gradle_cmd} publish"))?;
+    exec_cmd(&format!("git tag -a v{0} -m v{0}", current_version))?;
     fs::write("gradle.properties", format!("version={next_version}"))
         .map_err(|e|format!("Cannot update version: {e}"))?;
     //TODO use "build version {current_version} message
-    exec_cmd(&format!("git commit -am \"build version {current_version}\""));
+    exec_cmd(&format!("git commit -am \"build version {current_version}\""))?;
     Ok(())
 }
 
@@ -47,13 +47,17 @@ fn load_current_version() -> CmdResult<String> {
         .ok_or(format!("Cannot find current version property"))
 }
 
-fn exec_cmd(command: &str) {
+fn exec_cmd(command: &str) -> CmdResult<()> {
+    let current_dir = env::current_dir().map_err(
+        |e|format!("Cannot get current_dir: {e}")
+    )?;
     println!("execute {command}");
     let status = Command::new("cmd")
         .arg("/C")
         .raw_arg(command)
-        .current_dir(env::current_dir().unwrap())
+        .current_dir(current_dir)
         .status()
         .unwrap();
     assert!(status.success());
+    Ok(())
 }
