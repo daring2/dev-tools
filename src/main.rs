@@ -4,14 +4,7 @@ use std::os::windows::process::CommandExt;
 use std::process::Command;
 
 fn main() {
-    let mut args = env::args().skip(1);
-    //TODO replace panic with Result
-    let command: &str = &args.next()
-        .expect("Please specify command");
-    let result = match command {
-        "release" => perform_release(args),
-        _ => Err(format!("Invalid command '{command}'")),
-    };
+    let result = execute();
     if let Err(e) = result {
         eprintln!("{e}");
         process::exit(1);
@@ -19,6 +12,16 @@ fn main() {
 }
 
 type CmdResult<T> = Result<T, String>;
+
+fn execute() -> CmdResult<()> {
+    let mut args = env::args().skip(1);
+    let command: &str = &args.next()
+        .ok_or("Please specify command")?;
+    match command {
+        "release" => perform_release(args),
+        _ => Err(format!("Invalid command '{command}'")),
+    }
+}
 
 fn perform_release(mut args: impl Iterator<Item = String>) -> CmdResult<()> {
     let current_version = load_current_version()?;
