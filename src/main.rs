@@ -20,6 +20,7 @@ enum Commands {
 struct ReleaseArgs {
     /// next version
     next_version: String,
+    //TODO add options current_version, clean, build, etc
 }
 
 fn main() {
