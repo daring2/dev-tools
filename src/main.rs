@@ -2,6 +2,25 @@ use std::{env, process};
 use std::fs;
 use std::os::windows::process::CommandExt;
 use std::process::Command;
+use clap::{Args, Parser, Subcommand};
+
+#[derive(Parser)]
+#[command(version)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    Release(ReleaseArgs),
+}
+
+#[derive(Args)]
+struct ReleaseArgs {
+    /// next version
+    next_version: String,
+}
 
 fn main() {
     let result = execute();
@@ -14,19 +33,18 @@ fn main() {
 type CmdResult<T> = Result<T, String>;
 
 fn execute() -> CmdResult<()> {
-    let mut args = env::args().skip(1);
-    let command: &str = &args.next()
-        .ok_or("Please specify command")?;
-    match command {
-        "release" => perform_release(args),
-        _ => Err(format!("Invalid command '{command}'")),
+    let cli = Cli::parse();
+    match cli.command {
+        Commands::Release(args) => perform_release(args)
     }
 }
 
-fn perform_release(mut args: impl Iterator<Item = String>) -> CmdResult<()> {
+fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
     let current_version = load_current_version()?;
-    let next_version = args.next()
-        .ok_or("Please specify next version")?;
+    let next_version = args.next_version;
+    if next_version.trim().is_empty(){
+        return Err("Please specify next version".to_string());
+    }
     println!("release: current_version={current_version}, next_version={next_version}");
     //TODO add option for clean build
     let gradle_cmd = "gradlew.bat --no-daemon";
