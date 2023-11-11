@@ -51,6 +51,7 @@ fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
     let gradle_cmd = "gradlew.bat --no-daemon";
     exec_cmd(&format!("{gradle_cmd} publish"))?;
     exec_cmd(&format!("git tag -a v{0} -m v{0}", current_version))?;
+    //TODO update only version property
     fs::write("gradle.properties", format!("version={next_version}"))
         .map_err(|e|format!("Cannot update version: {e}"))?;
     //TODO use "build version {current_version} message
