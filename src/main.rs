@@ -7,6 +7,9 @@ use std::process::Command;
 use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand};
 
+mod gradle_props;
+use crate::gradle_props::GradleProperties;
+
 #[derive(Parser)]
 #[command(version)]
 struct Cli {
@@ -43,6 +46,7 @@ fn execute() -> CmdResult<()> {
 fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
     let mut gradle_props = load_gradle_properties()?;
     let current_version = gradle_props.get("version")
+        .map(|it|it.to_string())
         .context("Cannot find current version property")?;
     let next_version = args.next_version;
     if next_version.trim().is_empty(){
@@ -62,22 +66,7 @@ fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
     Ok(())
 }
 
-struct GradleProperties {
-    keys: Vec<String>,
-    values: HashMap<String, String>,
-}
 
-impl GradleProperties {
-
-    //TODO move to separate file
-    //TODO introduce methods load, save
-
-    fn get(&self, key: &str) -> Option<&str> {
-        return self.values.get(key)
-            .map(|it|it.as_str())
-    }
-
-}
 
 fn load_gradle_properties() -> CmdResult<GradleProperties> {
     let mut props = GradleProperties {
