@@ -1,14 +1,13 @@
-use std::collections::HashMap;
 use std::env;
-use std::fs;
 use std::os::windows::process::CommandExt;
 use std::process::Command;
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand};
 
-mod gradle_props;
 use crate::gradle_props::GradleProperties;
+
+mod gradle_props;
 
 #[derive(Parser)]
 #[command(version)]
@@ -44,7 +43,7 @@ fn execute() -> CmdResult<()> {
 }
 
 fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
-    let mut gradle_props = load_gradle_properties()?;
+    let mut gradle_props = GradleProperties::load("gradle.properties")?;
     let current_version = gradle_props.get("version")
         .map(|it|it.to_string())
         .context("Cannot find current version property")?;
@@ -58,47 +57,10 @@ fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
     let gradle_cmd = "gradlew.bat --no-daemon";
     exec_cmd(&format!("{gradle_cmd} publish"))?;
     exec_cmd(&format!("git tag -a v{0} -m v{0}", current_version))?;
-    gradle_props.values.insert("version".to_string(), next_version);
-    //TODO keep properties order
-    write_gradle_properties(gradle_props)?;
+    gradle_props.set("version", &next_version);
+    gradle_props.save()?;
     //TODO use "build version {current_version} message
     exec_cmd(&format!("git commit -am \"build version {current_version}\""))?;
-    Ok(())
-}
-
-
-
-fn load_gradle_properties() -> CmdResult<GradleProperties> {
-    let mut props = GradleProperties {
-        keys: Vec::new(),
-        values: HashMap::new(),
-    };
-    let file = "gradle.properties";
-    let content = fs::read_to_string(file)
-        .with_context(||format!("Cannot read file '{file}'"))?;
-    for line in content.lines() {
-        let (key, value) = line.split_once("=")
-            .unwrap_or(("", ""));
-        let key = key.trim().to_string();
-        let value = value.trim().to_string();
-        if !key.is_empty() {
-            props.keys.push(key.to_string()); //TODO optimize
-            props.values.insert(key, value);
-        }
-    }
-    return Ok(props)
-}
-
-fn write_gradle_properties(props: GradleProperties) -> CmdResult<()> {
-    let content = props.keys.iter()
-        .map(|key| {
-            let value = props.get(key).unwrap_or("");
-            format!("{}={}", key, value)
-        })
-        .collect::<Vec<String>>()
-        .join("\n");
-    fs::write("gradle.properties", content)
-        .context("Cannot update version")?;
     Ok(())
 }
 
