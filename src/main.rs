@@ -54,7 +54,7 @@ fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
     let gradle_cmd = "gradlew.bat --no-daemon";
     exec_cmd(&format!("{gradle_cmd} publish"))?;
     exec_cmd(&format!("git tag -a v{0} -m v{0}", current_version))?;
-    gradle_props.insert("version".to_string(), next_version);
+    gradle_props.values.insert("version".to_string(), next_version);
     //TODO keep properties order
     write_gradle_properties(gradle_props)?;
     //TODO use "build version {current_version} message
@@ -62,23 +62,50 @@ fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
     Ok(())
 }
 
-fn load_gradle_properties() -> CmdResult<HashMap<String, String>> {
-    let mut props = HashMap::new();
+struct GradleProperties {
+    keys: Vec<String>,
+    values: HashMap<String, String>,
+}
+
+impl GradleProperties {
+
+    //TODO move to separate file
+    //TODO introduce methods load, save
+
+    fn get(&self, key: &str) -> Option<&str> {
+        return self.values.get(key)
+            .map(|it|it.as_str())
+    }
+
+}
+
+fn load_gradle_properties() -> CmdResult<GradleProperties> {
+    let mut props = GradleProperties {
+        keys: Vec::new(),
+        values: HashMap::new(),
+    };
     let file = "gradle.properties";
     let content = fs::read_to_string(file)
         .with_context(||format!("Cannot read file '{file}'"))?;
     for line in content.lines() {
-        let ss = line.split_once("=");
-        if let Some((key, value)) = ss {
-            props.insert(key.trim().to_string(), value.trim().to_string());
+        let (key, value) = line.split_once("=")
+            .unwrap_or(("", ""));
+        let key = key.trim().to_string();
+        let value = value.trim().to_string();
+        if !key.is_empty() {
+            props.keys.push(key.to_string()); //TODO optimize
+            props.values.insert(key, value);
         }
     }
     return Ok(props)
 }
 
-fn write_gradle_properties(props: HashMap<String, String>) -> CmdResult<()> {
-    let content = props.iter()
-        .map(|it|format!("{}={}", it.0, it.1))
+fn write_gradle_properties(props: GradleProperties) -> CmdResult<()> {
+    let content = props.keys.iter()
+        .map(|key| {
+            let value = props.get(key).unwrap_or("");
+            format!("{}={}", key, value)
+        })
         .collect::<Vec<String>>()
         .join("\n");
     fs::write("gradle.properties", content)
