@@ -10,7 +10,7 @@ pub struct GradleProperties {
 
 impl GradleProperties {
 
-    //TODO introduce methods load, save
+    //TODO use lifetime
 
     pub fn load(file: &str) -> Result<GradleProperties> {
         let mut props = GradleProperties {
