@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::os::windows::process::CommandExt;
@@ -40,7 +41,9 @@ fn execute() -> CmdResult<()> {
 }
 
 fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
-    let current_version = load_current_version()?;
+    let mut gradle_props = load_gradle_properties()?;
+    let current_version = gradle_props.get("version")
+        .context("Cannot find current version property")?;
     let next_version = args.next_version;
     if next_version.trim().is_empty(){
         bail!("Please specify next version");
@@ -51,26 +54,36 @@ fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
     let gradle_cmd = "gradlew.bat --no-daemon";
     exec_cmd(&format!("{gradle_cmd} publish"))?;
     exec_cmd(&format!("git tag -a v{0} -m v{0}", current_version))?;
-    //TODO update only version property
-    fs::write("gradle.properties", format!("version={next_version}"))
-        .context("Cannot update version")?;
-        // .map_err(|e|format!("Cannot update version: {e}"))?;
+    gradle_props.insert("version".to_string(), next_version);
+    //TODO keep properties order
+    write_gradle_properties(gradle_props)?;
     //TODO use "build version {current_version} message
     exec_cmd(&format!("git commit -am \"build version {current_version}\""))?;
     Ok(())
 }
 
-fn load_current_version() -> CmdResult<String> {
+fn load_gradle_properties() -> CmdResult<HashMap<String, String>> {
+    let mut props = HashMap::new();
     let file = "gradle.properties";
-    fs::read_to_string(file)
-        .with_context(||format!("Cannot read file '{file}'"))?
-        // .map_err(|e|format!("Cannot read file '{file}': {e}"))?
-        .lines()
-        .filter_map(|it|it.strip_prefix("version="))
-        .map(|it|String::from(it.trim()))
-        .next()
-        .context("Cannot find current version property")
-        // .ok_or(format!("Cannot find current version property"))
+    let content = fs::read_to_string(file)
+        .with_context(||format!("Cannot read file '{file}'"))?;
+    for line in content.lines() {
+        let ss = line.split_once("=");
+        if let Some((key, value)) = ss {
+            props.insert(key.trim().to_string(), value.trim().to_string());
+        }
+    }
+    return Ok(props)
+}
+
+fn write_gradle_properties(props: HashMap<String, String>) -> CmdResult<()> {
+    let content = props.iter()
+        .map(|it|format!("{}={}", it.0, it.1))
+        .collect::<Vec<String>>()
+        .join("\n");
+    fs::write("gradle.properties", content)
+        .context("Cannot update version")?;
+    Ok(())
 }
 
 fn exec_cmd(command: &str) -> CmdResult<()> {
