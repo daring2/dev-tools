@@ -88,3 +88,6 @@ fn exec_cmd(command: &str) -> CmdResult<()> {
         // .map_err(|e|format!("Cannot execute command '{command}': {e}"))?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests;
