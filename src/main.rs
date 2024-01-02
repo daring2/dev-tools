@@ -25,6 +25,12 @@ enum Commands {
 struct ReleaseArgs {
     /// next version
     next_version: String,
+    /// Clean project before release
+    #[arg(short, long)]
+    clean: bool,
+    /// Build project before release
+    #[arg(short, long)]
+    build: bool,
     //TODO add options current_version, clean, build, etc
 }
 
@@ -47,21 +53,31 @@ fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
     let current_version = gradle_props.get("version")
         .map(|it|it.to_string())
         .context("Cannot find current version property")?;
-    let next_version = args.next_version;
-    if next_version.trim().is_empty(){
+    let next_version = args.next_version.trim();
+    if next_version.is_empty() {
         bail!("Please specify next version");
         // return Err("Please specify next version".to_string());
     }
     println!("release: current_version={current_version}, next_version={next_version}");
-    //TODO add option for clean build
-    let gradle_cmd = "gradlew.bat --no-daemon";
+    let gradle_cmd = build_gradle_command(&args);
     exec_cmd(&format!("{gradle_cmd} publish"))?;
     exec_cmd(&format!("git tag -a v{0} -m v{0}", current_version))?;
     gradle_props.set("version", &next_version);
     gradle_props.save()?;
-    //TODO use "build version {current_version} message
     exec_cmd(&format!("git commit -am \"build version {current_version}\""))?;
     Ok(())
+}
+
+fn build_gradle_command(args: &ReleaseArgs) -> String {
+    let mut gradle_args = vec!["gradlew.bat"];
+    gradle_args.push("--no-daemon");
+    if args.clean {
+        gradle_args.push("clean");
+    }
+    if args.build {
+        gradle_args.push("build");
+    }
+    return gradle_args.join(" ");
 }
 
 fn exec_cmd(command: &str) -> CmdResult<()> {
