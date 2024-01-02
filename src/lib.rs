@@ -11,18 +11,18 @@ mod gradle_props;
 
 #[derive(Parser)]
 #[command(version)]
-struct Cli {
+pub struct Cli {
     #[command(subcommand)]
-    command: Commands,
+    pub command: Commands,
 }
 
 #[derive(Subcommand)]
-enum Commands {
+pub enum Commands {
     Release(ReleaseArgs),
 }
 
 #[derive(Args)]
-struct ReleaseArgs {
+pub struct ReleaseArgs {
     /// next version
     next_version: String,
     /// Clean project before release
@@ -37,18 +37,7 @@ struct ReleaseArgs {
 type CmdResult<T> = Result<T>;
 // type CmdResult<T> = Result<T, String>;
 
-fn main() -> CmdResult<()> {
-    execute()
-}
-
-fn execute() -> CmdResult<()> {
-    let cli = Cli::parse();
-    match cli.command {
-        Commands::Release(args) => perform_release(args)
-    }
-}
-
-fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
+pub fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
     let mut gradle_props = GradleProperties::load("gradle.properties")?;
     let current_version = gradle_props.get("version")
         .map(|it|it.to_string())
@@ -61,10 +50,10 @@ fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
     println!("release: current_version={current_version}, next_version={next_version}");
     let gradle_cmd = build_gradle_command(&args);
     exec_cmd(&format!("{gradle_cmd} publish"))?;
-    exec_cmd(&format!("git tag -a v{0} -m v{0}", current_version))?;
+    // exec_cmd(&format!("git tag -a v{0} -m v{0}", current_version))?;
     gradle_props.set("version", &next_version);
     gradle_props.save()?;
-    exec_cmd(&format!("git commit -am \"build version {current_version}\""))?;
+    // exec_cmd(&format!("git commit -am \"build version {current_version}\""))?;
     Ok(())
 }
 
