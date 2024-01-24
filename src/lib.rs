@@ -23,7 +23,7 @@ pub enum Commands {
 
 #[derive(Args)]
 pub struct ReleaseArgs {
-    /// next version
+    /// Next version
     next_version: String,
     /// Clean project before release
     #[arg(short, long)]
@@ -31,7 +31,10 @@ pub struct ReleaseArgs {
     /// Build project before release
     #[arg(short, long)]
     build: bool,
-    //TODO add options current_version, clean, build, etc
+    /// Publish project before release
+    #[arg(short, long, default_value_t = true)]
+    publish: bool,
+    //TODO add current_version option
 }
 
 type CmdResult<T> = Result<T>;
@@ -49,11 +52,11 @@ pub fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
     }
     println!("release: current_version={current_version}, next_version={next_version}");
     let gradle_cmd = build_gradle_command(&args);
-    exec_cmd(&format!("{gradle_cmd} publish"))?;
-    // exec_cmd(&format!("git tag -a v{0} -m v{0}", current_version))?;
+    exec_cmd(&gradle_cmd)?;
+    exec_cmd(&format!("git tag -a v{0} -m v{0}", current_version))?;
     gradle_props.set("version", &next_version);
     gradle_props.save()?;
-    // exec_cmd(&format!("git commit -am \"build version {current_version}\""))?;
+    exec_cmd(&format!("git commit -am \"build version {current_version}\""))?;
     Ok(())
 }
 
@@ -65,6 +68,9 @@ fn build_gradle_command(args: &ReleaseArgs) -> String {
     }
     if args.build {
         gradle_args.push("build");
+    }
+    if args.publish {
+        gradle_args.push("publish");
     }
     return gradle_args.join(" ");
 }

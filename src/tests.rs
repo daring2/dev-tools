@@ -2,14 +2,20 @@ use super::*;
 
 #[test]
 fn test_build_gradle_command() {
-    let args1 = ReleaseArgs { next_version: "0.1".to_string(), clean: false, build: false, };
+    let args1 = ReleaseArgs {
+        next_version: "0.1".to_string(),
+        clean: false, build: false, publish: false,
+    };
     assert_eq!(
         build_gradle_command(&args1),
         "gradlew.bat --no-daemon"
     );
-    let args2 = ReleaseArgs { next_version: "0.1".to_string(), clean: true, build: true, };
+    let args2 = ReleaseArgs {
+        next_version: "0.1".to_string(),
+        clean: true, build: true, publish: true,
+    };
     assert_eq!(
         build_gradle_command(&args2),
-        "gradlew.bat --no-daemon clean build"
+        "gradlew.bat --no-daemon clean build publish"
     );
 }
