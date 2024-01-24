@@ -34,6 +34,9 @@ pub struct ReleaseArgs {
     /// Publish project before release
     #[arg(short, long, default_value_t = true)]
     publish: bool,
+    /// Add VCS tag
+    #[arg(long, default_value_t = true)]
+    tag: bool,
     /// Commit changes into VCS
     #[arg(long, default_value_t = true)]
     commit: bool,
@@ -56,7 +59,9 @@ pub fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
     println!("release: current_version={current_version}, next_version={next_version}");
     let gradle_cmd = build_gradle_command(&args);
     exec_cmd(&gradle_cmd)?;
-    exec_cmd(&format!("git tag -a v{0} -m v{0}", current_version))?;
+    if args.tag {
+        exec_cmd(&format!("git tag -a v{0} -m v{0}", current_version))?;
+    }
     gradle_props.set("version", &next_version);
     gradle_props.save()?;
     if args.commit {
