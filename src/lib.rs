@@ -31,7 +31,7 @@ pub struct ReleaseArgs {
     /// Build project before release
     #[arg(short, long)]
     build: bool,
-    /// Publish project before release
+    /// Publish project
     #[arg(short, long, default_value_t = true)]
     publish: bool,
     /// Add VCS tag
