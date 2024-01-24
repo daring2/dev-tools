@@ -34,6 +34,9 @@ pub struct ReleaseArgs {
     /// Publish project before release
     #[arg(short, long, default_value_t = true)]
     publish: bool,
+    /// Commit changes into VCS
+    #[arg(long, default_value_t = true)]
+    commit: bool,
     //TODO add current_version option
 }
 
@@ -56,7 +59,9 @@ pub fn perform_release(args: ReleaseArgs) -> CmdResult<()> {
     exec_cmd(&format!("git tag -a v{0} -m v{0}", current_version))?;
     gradle_props.set("version", &next_version);
     gradle_props.save()?;
-    exec_cmd(&format!("git commit -am \"build version {current_version}\""))?;
+    if args.commit {
+        exec_cmd(&format!("git commit -am \"build version {current_version}\""))?;
+    }
     Ok(())
 }
 
